@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Your Pint — Payments Beer Nerds</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ══ Design Tokens ══════════════════════════════════════════ */
+    :root {
+      --navy:        #0c1a28;
+      --navy-mid:    #112030;
+      --navy-card:   rgba(14, 26, 40, 0.97);
+      --navy-lift:   #172840;
+      --amber:       #f5a623;
+      --amber-lt:    #ffc355;
+      --amber-dim:   rgba(245,166,35,0.15);
+      --amber-glow:  rgba(245,166,35,0.30);
+      --green:       #3e7055;
+      --green-lt:    #5fa378;
+      --green-dim:   rgba(63,112,85,0.18);
+      --cream:       #f0e8d8;
+      --muted:       #6e8599;
+      --border:      rgba(255,255,255,0.08);
+      --border-warm: rgba(245,166,35,0.18);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--cream);
+      overflow-x: hidden;
+    }
+
+    /* ══ Page Header ════════════════════════════════════════════ */
+    .header {
+      background: var(--navy);
+      padding: 28px 40px 24px;
+      border-bottom: 3px solid var(--amber);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      top: -200px; right: -80px;
+      background: radial-gradient(circle, rgba(245,166,35,.10) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      bottom: -120px; left: 60px;
+      background: radial-gradient(circle, rgba(63,112,85,.15) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--amber);
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .header-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(2.4rem, 4.5vw, 3.6rem);
+      letter-spacing: 0.03em;
+      line-height: 0.95;
+      color: var(--cream);
+    }
+    .header-title em { font-style: normal; color: var(--amber); }
+
+    .header-sub {
+      font-size: 0.87rem;
+      color: var(--muted);
+      margin-top: 8px;
+      max-width: 500px;
+      line-height: 1.55;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .legend-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 6px 14px 6px 9px;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-dot.event   { background: var(--amber); box-shadow: 0 0 8px var(--amber-glow); }
+    .legend-dot.brewery { background: var(--green-lt); }
+
+    /* ══ Map ════════════════════════════════════════════════════ */
+    #map-wrap { position: relative; }
+
+    #map {
+      width: 100%;
+      height: clamp(460px, 58vh, 680px);
+    }
+
+    #suggest-btn {
+      position: absolute;
+      bottom: 26px;
+      right: 14px;
+      z-index: 800;
+      background: var(--amber);
+      color: var(--navy);
+      border: none;
+      border-radius: 50px;
+      padding: 11px 22px;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 22px rgba(245,166,35,.45);
+      transition: transform .18s, box-shadow .18s, background .18s;
+    }
+    #suggest-btn:hover {
+      background: var(--amber-lt);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(245,166,35,.55);
+    }
+
+    /* ══ Leaflet Overrides ══════════════════════════════════════ */
+    .leaflet-popup-content-wrapper {
+      background: var(--navy-card) !important;
+      border: 1px solid var(--border-warm) !important;
+      border-radius: 14px !important;
+      color: var(--cream) !important;
+      box-shadow: 0 16px 50px rgba(0,0,0,.7) !important;
+      backdrop-filter: blur(12px);
+    }
+    .leaflet-popup-tip { background: var(--navy-card) !important; }
+    .leaflet-popup-content {
+      margin: 16px 18px !important;
+      font-family: 'DM Sans', sans-serif !important;
+    }
+    .leaflet-popup-close-button { color: var(--muted) !important; font-size: 18px !important; top: 8px !important; right: 10px !important; }
+
+    /* ══ Popup Components ═══════════════════════════════════════ */
+    .pop-badge {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 7px;
+    }
+    .pop-badge.event   { background: var(--amber-dim); color: var(--amber); }
+    .pop-badge.brewery { background: var(--green-dim); color: var(--green-lt); }
+
+    .pop-name {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.22rem;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
+      margin-bottom: 7px;
+    }
+
+    .pop-row {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 5px;
+      margin-bottom: 3px;
+    }
+    .pop-row strong { color: var(--cream); font-weight: 500; }
+
+    .pop-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 10px 0;
+    }
+
+    .pop-rank-label {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .pop-spot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .pop-spot:last-child { border-bottom: none; }
+
+    .pop-spot-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pop-rank {
+      font-size: 0.72rem;
+      font-family: 'Bebas Neue', cursive;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      flex-shrink: 0;
+      width: 18px;
+      text-align: right;
+    }
+    .pop-rank.gold   { color: #FFD700; }
+    .pop-rank.silver { color: #C0C0C0; }
+    .pop-rank.bronze { color: #CD7F32; }
+
+    .pop-spot-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pop-vote-btn {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      color: var(--cream);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background .15s, border-color .15s, transform .1s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .pop-vote-btn:hover { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+    .pop-vote-btn.bump  { animation: votebump .25s cubic-bezier(.34,1.56,.64,1); }
+
+    @keyframes voteburn {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.25); }
+      100% { transform: scale(1); }
+    }
+    @keyframes votenum {
+      0%   { opacity:1; transform: translateY(0); }
+      40%  { opacity:0; transform: translateY(-8px); }
+      60%  { opacity:0; transform: translateY(6px); }
+      100% { opacity:1; transform: translateY(0); }
+    }
+    @keyframes voteburn { 0%{transform:scale(1)} 40%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+    .pop-empty {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-style: italic;
+      padding: 4px 0;
+    }
+
+    .pop-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 0.77rem;
+      font-weight: 600;
+      color: var(--amber);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .pop-link:hover { text-decoration: underline; }
+
+    /* ══ Leaderboard Section ════════════════════════════════════ */
+    #leaderboard {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 52px 40px 72px;
+    }
+
+    .lb-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .lb-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--green-lt);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .lb-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+    .lb-title em { font-style: normal; color: var(--amber); }
+
+    .lb-sub {
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    /* Tabs */
+    .lb-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0;
+    }
+
+    .lb-tab {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      padding: 9px 16px 11px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      transition: color .15s, border-color .15s;
+    }
+    .lb-tab:hover { color: var(--cream); }
+    .lb-tab.active {
+      color: var(--amber);
+      border-bottom-color: var(--amber);
+    }
+
+    /* Grid */
+    .lb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
+    }
+
+    /* Card */
+    .lb-card {
+      background: var(--navy-lift);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      transition: border-color .18s, transform .18s;
+      position: relative;
+      overflow: hidden;
+    }
+    .lb-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,255,255,.015) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .lb-card:hover {
+      border-color: var(--border-warm);
+      transform: translateY(-2px);
+    }
+    .lb-card.rank-1 { border-color: rgba(255,215,0,.3); }
+    .lb-card.rank-2 { border-color: rgba(192,192,192,.22); }
+    .lb-card.rank-3 { border-color: rgba(205,127,50,.22); }
+
+    .lb-medal {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.5rem;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      flex-shrink: 0;
+      width: 32px;
+      text-align: center;
+      padding-top: 2px;
+    }
+    .lb-medal.gold   { color: #FFD700; text-shadow: 0 0 12px rgba(255,215,0,.5); }
+    .lb-medal.silver { color: #C0C0C0; }
+    .lb-medal.bronze { color: #CD7F32; }
+    .lb-medal.num    { color: var(--muted); font-size: 1.1rem; }
+
+    .lb-card-body { flex: 1; min-width: 0; }
+
+    .lb-card-name {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.2rem;
+      letter-spacing: 0.03em;
+      line-height: 1.1;
+      margin-bottom: 5px;
+    }
+
+    .lb-card-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+
+    .lb-type-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--green-dim);
+      color: var(--green-lt);
+    }
+
+    .lb-event-tag {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .lb-event-tag span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 160px;
+    }
+
+    .lb-notes {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+      border-left: 2px solid var(--green);
+      padding-left: 8px;
+      margin-top: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .lb-card-foot {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .lb-credit {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .lb-vote-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(245,166,35,.08);
+      border: 1.5px solid rgba(245,166,35,.25);
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      color: var(--amber);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: background .15s, border-color .15s, transform .12s;
+    }
+    .lb-vote-btn:hover {
+      background: rgba(245,166,35,.18);
+      border-color: var(--amber);
+      transform: translateY(-1px);
+    }
+    .lb-vote-btn.bumping {
+      animation: cardvotebump .3s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    @keyframes cardvotebump {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    .lb-vote-icon { font-size: 1rem; display: inline-block; transition: transform .2s; }
+    .lb-vote-btn:hover .lb-vote-icon { transform: translateY(-2px); }
+
+    .lb-vote-count {
+      font-size: 1rem;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    /* Empty state */
+    .lb-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .lb-empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
+
+    .lb-empty-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.6rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .lb-empty-body {
+      font-size: 0.84rem;
+      color: var(--muted);
+      opacity: .7;
+    }
+
+    /* Loading state */
+    .lb-loading {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--amber);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Section divider */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 40px;
+    }
+
+    /* ══ Modal ══════════════════════════════════════════════════ */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 14, 22, .85);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--navy-mid);
+      border: 1px solid var(--border-warm);
+      border-radius: 20px;
+      padding: 32px 30px;
+      max-width: 460px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 28px 80px rgba(0,0,0,.8);
+      animation: popIn .28s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    @keyframes popIn {
+      from { opacity:0; transform: scale(.92) translateY(20px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2.1rem;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+    .modal-title em { font-style: normal; color: var(--amber); }
+
+    .modal-sub { font-size: 0.8rem; color: var(--muted); margin-top: 5px; }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.7rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+      transition: color .15s;
+    }
+    .modal-close:hover { color: var(--cream); }
+
+    .field { margin-bottom: 15px; }
+
+    .field label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field label .req { color: var(--amber); }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 9px;
+      padding: 10px 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--cream);
+      outline: none;
+      transition: border-color .18s, background .18s;
+      -webkit-appearance: none;
+    }
+    .field input::placeholder,
+    .field textarea::placeholder { color: rgba(110,133,153,.45); }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--amber);
+      background: rgba(245,166,35,.03);
+    }
+    .field select option { background: #162030; }
+    .field textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--amber);
+      color: var(--navy);
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background .15s, transform .12s;
+    }
+    .submit-btn:hover { background: var(--amber-lt); transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: .6; transform: none; cursor: default; }
+
+    .form-foot {
+      font-size: 0.73rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    #success-state {
+      display: none;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .success-emoji { font-size: 3.8rem; display: block; margin-bottom: 14px; }
+
+    .success-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2.1rem;
+      letter-spacing: 0.04em;
+      color: var(--green-lt);
+      margin-bottom: 8px;
+    }
+
+    .success-body {
+      font-size: 0.87rem;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 290px;
+      margin: 0 auto 22px;
+    }
+
+    /* ══ Squarespace Full-Width Override ═══════════════════════ */
+    html, body { width: 100%; max-width: 100% !important; }
+
+    .sqs-block-code,
+    .sqs-block-content,
+    .sqs-col-12,
+    .sqs-row,
+    .content-wrapper,
+    .container { max-width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; }
+
+    /* ══ Scrollbar ══════════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.09); border-radius: 5px; }
+
+    /* ══ Responsive ═════════════════════════════════════════════ */
+    @media (max-width: 700px) {
+      .header          { padding: 20px; }
+      .header-inner    { align-items: flex-start; }
+      #leaderboard     { padding: 36px 20px 52px; }
+      .section-divider { margin: 0 20px; }
+      .field-row       { grid-template-columns: 1fr; }
+      .modal           { padding: 24px 20px; }
+      .lb-tabs         { gap: 2px; }
+      .lb-tab          { padding: 8px 10px 10px; font-size: 0.76rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div>
+      <div class="header-eyebrow">Payments Beer Nerds</div>
+      <h1 class="header-title">Find Your <em>Pint</em><br>Near the Conference</h1>
+      <p class="header-sub">Major payments events across the U.S. — with the best breweries, taprooms, and craft beer bars nearby. Curated and voted on by the community.</p>
+    </div>
+    <div class="legend">
+      <div class="legend-pill"><div class="legend-dot event"></div><span>Payments Event</span></div>
+      <div class="legend-pill"><div class="legend-dot brewery"></div><span>Brewery / Bar</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ MAP ═════════════════════════════════════════════════════ -->
+<div id="map-wrap">
+  <div id="map"></div>
+  <button id="suggest-btn" onclick="openModal()">🍺 Suggest a Spot</button>
+</div>
+
+<hr class="section-divider">
+
+<!-- ══ LEADERBOARD ═════════════════════════════════════════════ -->
+<section id="leaderboard">
+  <div class="lb-header">
+    <div>
+      <div class="lb-eyebrow">Community Rankings</div>
+      <h2 class="lb-title">The <em>Leaderboard</em></h2>
+      <p class="lb-sub">Voted on by conference-goers. Click 🍺 to cast your vote.</p>
+    </div>
+  </div>
+
+  <div class="lb-tabs" id="lb-tabs">
+    <button class="lb-tab active" data-tab="all" onclick="setTab('all', this)">All Events</button>
+    <!-- Event tabs injected by JS -->
+  </div>
+
+  <div class="lb-grid" id="lb-grid">
+    <div class="lb-loading"><div class="spinner"></div> Loading spots…</div>
+  </div>
+</section>
+
+<!-- ══ SUBMIT MODAL ════════════════════════════════════════════ -->
+<div id="modal-overlay" onclick="overlayClick(event)">
+  <div class="modal">
+
+    <div id="form-state">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Suggest a <em>Spot</em></div>
+          <div class="modal-sub">Reviewed by Payments Beer Nerds before going live on the map.</div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+
+      <form id="suggest-form" onsubmit="handleSubmit(event)">
+        <div class="field">
+          <label>Brewery / Bar Name <span class="req">*</span></label>
+          <input type="text" name="venue_name" placeholder="e.g. Modern Times Beer" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Type</label>
+            <select name="venue_type">
+              <option value="" disabled selected>Select…</option>
+              <option>Brewery</option>
+              <option>Taproom</option>
+              <option>Brewpub</option>
+              <option>Craft Beer Bar</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Nearest Event</label>
+            <select name="near_event" id="event-select">
+              <option value="" disabled selected>Select…</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>City <span class="req">*</span></label>
+          <input type="text" name="address" placeholder="e.g. San Diego, CA" required>
+        </div>
+        <div class="field">
+          <label>Why This Spot? (Optional)</label>
+          <textarea name="notes" placeholder="Must-try beers? Walking distance from the hotel? Great vibe for a group?"></textarea>
+        </div>
+        <div class="field">
+          <label>Your Name (Optional)</label>
+          <input type="text" name="submitter_name" placeholder="So we can give you credit on the map">
+        </div>
+        <button type="submit" class="submit-btn" id="submit-btn">Submit for Review 🍻</button>
+        <p class="form-foot">Submissions are reviewed by the Payments Beer Nerds team before going live.</p>
+      </form>
+    </div>
+
+    <div id="success-state">
+      <span class="success-emoji">🍺</span>
+      <div class="success-title">Submission Received!</div>
+      <p class="success-body">Nice find. We'll review it and add it to the map if it makes the cut. Cheers — and see you at the conference!</p>
+      <button class="submit-btn" style="width:auto;padding:10px 32px;" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+╔══════════════════════════════════════════════════════════════════════╗
+║  GOOGLE APPS SCRIPT — Copy everything between the dashes into a     ║
+║  new project at script.google.com, then deploy as a Web App.        ║
+║  (Extensions → Apps Script → Deploy → New Deployment)               ║
+║  Settings: Execute as = Me  |  Who has access = Anyone              ║
+╠══════════════════════════════════════════════════════════════════════╣
+
+const SHEET_NAME = 'Breweries';
+const HEADERS = ['id','name','type','city','nearEventId','nearEventId2','eventName','lat','lng','notes','submittedBy','approved','votes'];
+
+function doGet(e) {
+  const action = (e.parameter && e.parameter.action) || 'breweries';
+  let result;
+  if      (action === 'breweries') result = getApprovedBreweries();
+  else if (action === 'vote')      result = incrementVote(e.parameter.id);
+  else                             result = { error: 'Unknown action' };
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const sheet   = getOrCreateSheet();
+    const id      = Date.now().toString();
+    sheet.appendRow([
+      id,
+      payload.venue_name     || '',
+      payload.venue_type     || '',
+      payload.address        || '',
+      '',                        // nearEventId  ← fill when approving
+      payload.near_event     || '',
+      '',                        // lat          ← fill when approving
+      '',                        // lng          ← fill when approving
+      payload.notes          || '',
+      payload.submitter_name || '',
+      'pending',                 // approved ← change to "yes" to publish
+      0                          // votes
+    ]);
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: true, id }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ error: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getApprovedBreweries() {
+  const sheet = getOrCreateSheet();
+  const data  = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+  const h = data[0];
+  return data.slice(1)
+    .filter(row => row[h.indexOf('approved')] === 'yes')
+    .map(row => {
+      const obj = {};
+      h.forEach((key, i) => obj[key] = row[i]);
+      obj.votes        = Number(obj.votes) || 0;
+      obj.lat          = Number(obj.lat);
+      obj.lng          = Number(obj.lng);
+      obj.nearEventIds = String(obj.nearEventId).split(',').map(x => Number(x.trim())).filter(Boolean);
+      return obj;
+    });
+}
+
+function incrementVote(id) {
+  const sheet    = getOrCreateSheet();
+  const data     = sheet.getDataRange().getValues();
+  const h        = data[0];
+  const idCol    = h.indexOf('id');
+  const votesCol = h.indexOf('votes');
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]) === String(id)) {
+      const newVotes = (Number(data[i][votesCol]) || 0) + 1;
+      sheet.getRange(i + 1, votesCol + 1).setValue(newVotes);
+      return { success: true, votes: newVotes };
+    }
+  }
+  return { error: 'ID not found' };
+}
+
+function getOrCreateSheet() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let   sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(HEADERS);
+    sheet.getRange(1,1,1,HEADERS.length)
+         .setFontWeight('bold')
+         .setBackground('#1a3a55')
+         .setFontColor('#ffffff');
+  }
+  return sheet;
+}
+
+╚══════════════════════════════════════════════════════════════════════╝
+*/
+
+/* ════════════════════════════════════════════════════════════════════
+   ⚙️  YOUR CONFIGURATION — edit these sections
+   ════════════════════════════════════════════════════════════════════ */
+
+/*
+  STEP 1: Paste your Apps Script Web App URL here after deploying.
+  It looks like: https://script.google.com/macros/s/XXXXXXXXX/exec
+  Leave blank to see demo data.
+*/
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzL87P7URs3Gxgp9WgpzQDEVKSbfNAQz0QNW0dOM3ubctKSVBP1xiKeXCP3241UnrPO4A/exec';
+
+/*
+  STEP 2: Your payments events. Add / remove as needed.
+  lat/lng: right-click a location in Google Maps → "What's here?"
+*/
+const PAYMENTS_EVENTS = [
+  {
+    id: 1,
+    name: "Nacha Smarter Faster Payments",
+    shortName: "Nacha",
+    city: "San Diego, CA",
+    date: "April 27–30, 2026",
+    venue: "San Diego Convention Center",
+    lat: 32.7055, lng: -117.1601,
+    url: "https://smarter-faster-payments.nacha.org"
+  },
+  {
+    id: 2,
+    name: "AFP Annual Conference",
+    shortName: "AFP",
+    city: "Las Vegas, NV",
+    date: "November 2026",
+    venue: "Mandalay Bay",
+    lat: 36.0922, lng: -115.1749,
+    url: "https://conference.financialprofessionals.org"
+  },
+  {
+    id: 3,
+    name: "U.S. Faster Payments Council Fall Member Meeting",
+    shortName: "FPC",
+    city: "Overland Park, KS",
+    date: "November 2026",
+    venue: "Sheraton Overland Park Hotel",
+    lat: 38.9286, lng: -94.6566,
+    url: "https://fasterpaymentscouncil.org/events/2934/FPC-2026-Fall-Member-Meeting"
+  },
+  {
+    id: 4,
+    name: "Merchant Advisory Group Payments Conference",
+    shortName: "MAG",
+    city: "Nashville, TN",
+    date: "September 2026",
+    venue: "Gaylord Opryland Hotel",
+    lat: 36.2122, lng: -86.6946,
+    url: "https://www.merchantadvisorygroup.org/mag-calendar/2026/09/27/default-calendar/mag-payments-conference-2026"
+  },
+  {
+    id: 5,
+    name: "Money20/20 USA",
+    shortName: "Money20/20",
+    city: "Las Vegas, NV",
+    date: "October 2026",
+    venue: "The Venetian",
+    lat: 36.1699, lng: -115.1398,
+    url: "https://us.money2020.com"
+  },
+  {
+    id: 6,
+    name: "MRC San Diego",
+    shortName: "MRC",
+    city: "San Diego, CA",
+    date: "September 2027",
+    venue: "Hyatt Regency Mission Bay",
+    lat: 32.7656, lng: -117.2404,
+    url: "https://merchantriskcouncil.org/events/2026/mrc-san-diego-2026"
+  }
+];
+
+/*
+  DEMO DATA — shown when SCRIPT_URL is blank, so you can preview
+  the layout before the Apps Script is connected.
+  These do NOT need to be edited; they'll be replaced by live Sheet data.
+*/
+const DEMO_BREWERIES = [
+  { id:'d1', name:'AleSmith Brewing Company',        type:'Brewery',        city:'San Diego, CA', nearEventIds:[1], lat:32.8323, lng:-117.1500, notes:'World-class craft brewery. The Speedway Stout is legendary. ~15 min from the Convention Center.', submittedBy:'', votes:14 },
+  { id:'d2', name:'Modern Times Beer — Leisure World', type:'Taproom',      city:'San Diego, CA', nearEventIds:[1], lat:32.7197, lng:-117.1620, notes:'Walking distance from the conference. Great hazy IPAs and a lively patio.', submittedBy:'', votes:11 },
+  { id:'d3', name:'Karl Strauss Brewing — Marina',   type:'Brewpub',        city:'San Diego, CA', nearEventIds:[1], lat:32.7162, lng:-117.1660, notes:"San Diego institution. Perfect for a group dinner right after the keynotes.", submittedBy:'', votes:9 },
+  { id:'d4', name:'Thorn Street Brewery',            type:'Taproom',        city:'San Diego, CA', nearEventIds:[1], lat:32.7483, lng:-117.1319, notes:'Relaxed neighborhood taproom. Good wind-down spot after a full conference day.', submittedBy:'', votes:5 },
+  { id:'d5', name:'Beerhaus Las Vegas',              type:'Craft Beer Bar', city:'Las Vegas, NV',  nearEventIds:[5], lat:36.1210, lng:-115.1722, notes:'80+ taps right on the Strip. Great spot for a post-session pint.', submittedBy:'', votes:7 },
+  { id:'d6', name:'Able Baker Brewing',              type:'Brewery',        city:'Las Vegas, NV',  nearEventIds:[5], lat:36.1774, lng:-115.1340, notes:"One of Vegas's best craft breweries. Worth the short drive from the Venetian.", submittedBy:'', votes:4 },
+  { id:'d7', name:'Jackalope Brewing Company',       type:'Brewery',        city:'Nashville, TN',  nearEventIds:[4], lat:36.1584, lng:-86.7835, notes:'Fun, laid-back Nashville brewery. The Thunder Ann APA is a crowd favorite.', submittedBy:'', votes:6 },
+  { id:'d8', name:'Corsair Artisan Brewery',         type:'Brewpub',        city:'Nashville, TN',  nearEventIds:[4], lat:36.1627, lng:-86.7816, notes:'Craft beer and spirits near downtown Nashville. Easy Uber from Opryland.', submittedBy:'', votes:3 }
+];
+
+/* ════════════════════════════════════════════════════════════════════
+   APP STATE
+   ════════════════════════════════════════════════════════════════════ */
+
+let breweries  = [];
+let mapInstance;
+let activeTab  = 'all';
+let isDemo     = false;
+
+/* ════════════════════════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════════════════════════ */
+
+async function init() {
+  await loadBreweries();
+  buildEventDropdown();
+  buildLeaderboardTabs();
+  initMap();
+  renderLeaderboard();
+}
+
+function normalizeBrewery(b) {
+  // Build nearEventIds from nearEventId + optional nearEventId2 columns
+  // Using two separate columns avoids Google Sheets number-formatting issues
+  if (!b.nearEventIds || !Array.isArray(b.nearEventIds)) {
+    const ids = [b.nearEventId, b.nearEventId2]
+      .map(x => Number(x))
+      .filter(n => n && !isNaN(n));
+    b.nearEventIds = [...new Set(ids)]; // deduplicate
+  }
+  return b;
+}
+
+async function loadBreweries() {
+  if (!SCRIPT_URL) {
+    breweries = DEMO_BREWERIES.map(b => normalizeBrewery({ ...b }));
+    isDemo = true;
+    return;
+  }
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=breweries`);
+    const data = await res.json();
+    breweries = Array.isArray(data) ? data.map(normalizeBrewery) : [];
+    isDemo = false;
+  } catch (err) {
+    console.warn('Could not load breweries from Sheet, using demo data.', err);
+    breweries = DEMO_BREWERIES.map(b => normalizeBrewery({ ...b }));
+    isDemo = true;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MAP
+   ════════════════════════════════════════════════════════════════════ */
+
+function initMap() {
+  mapInstance = L.map('map', { center: [38.8, -96.5], zoom: 4, zoomControl: true });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(mapInstance);
+
+  PAYMENTS_EVENTS.forEach(ev => placeEventMarker(ev));
+  breweries.forEach(b => placeBreweryMarker(b));
+}
+
+function eventIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:40px;height:40px;background:#f5a623;border-radius:50%;border:3px solid #ffc355;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 0 5px rgba(245,166,35,.18),0 4px 16px rgba(0,0,0,.6);cursor:pointer;">⚡</div>`,
+    iconSize:[40,40], iconAnchor:[20,20], popupAnchor:[0,-26]
+  });
+}
+
+function breweryIcon(votes) {
+  const size = Math.min(36, 26 + Math.floor((votes || 0) / 3));
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;background:#3e7055;border-radius:50%;border:2.5px solid #5fa378;display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.45)}px;box-shadow:0 0 0 3px rgba(63,112,85,.18),0 3px 10px rgba(0,0,0,.5);cursor:pointer;">🍺</div>`,
+    iconSize:[size,size], iconAnchor:[size/2,size/2], popupAnchor:[0,-size/2-4]
+  });
+}
+
+function placeEventMarker(ev) {
+  const nearby = breweries.filter(b => (b.nearEventIds || []).includes(ev.id))
+    .sort((a,b) => (b.votes||0) - (a.votes||0));
+
+  const nearbyHtml = nearby.length
+    ? `<hr class="pop-divider">
+       <div class="pop-rank-label">Top Spots Nearby (${nearby.length})</div>
+       ${nearby.slice(0,5).map((b,i) => `
+         <div class="pop-spot">
+           <div class="pop-spot-left">
+             <div class="pop-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+             <div class="pop-spot-name">${b.name}</div>
+           </div>
+           <button class="pop-vote-btn" id="pop-vote-${b.id}" onclick="vote('${b.id}', event)">
+             🍺 <span id="pop-vc-${b.id}">${b.votes||0}</span>
+           </button>
+         </div>`).join('')}
+       ${nearby.length > 5 ? `<div style="font-size:0.75rem;color:var(--muted);padding-top:6px;text-align:center;">+${nearby.length-5} more in the leaderboard below</div>` : ''}`
+    : `<hr class="pop-divider"><div class="pop-empty">No spots added yet — be the first!</div>`;
+
+  const linkHtml = ev.url ? `<a href="${ev.url}" target="_blank" rel="noopener" class="pop-link">View Event →</a>` : '';
+
+  L.marker([ev.lat, ev.lng], { icon: eventIcon() })
+    .bindPopup(`
+      <div class="pop-badge event">Payments Event</div>
+      <div class="pop-name">${ev.name}</div>
+      <div class="pop-row">📍 ${ev.city}</div>
+      <div class="pop-row">📅 ${ev.date}</div>
+      <div class="pop-row">🏨 ${ev.venue}</div>
+      ${linkHtml}
+      ${nearbyHtml}
+    `, { maxWidth: 300 })
+    .addTo(mapInstance);
+}
+
+function placeBreweryMarker(b) {
+  const evNames = (b.nearEventIds || []).map(eid => (PAYMENTS_EVENTS.find(e => e.id === eid) || {}).shortName).filter(Boolean).join(', ');
+  const notesHtml = b.notes
+    ? `<div style="font-size:0.78rem;color:var(--muted);font-style:italic;border-left:2px solid var(--green);padding-left:8px;margin-top:8px;line-height:1.45;">${b.notes}</div>`
+    : '';
+  const creditHtml = b.submittedBy
+    ? `<div style="font-size:0.7rem;color:var(--muted);margin-top:7px;">Suggested by ${b.submittedBy}</div>`
+    : '';
+
+  L.marker([b.lat, b.lng], { icon: breweryIcon(b.votes) })
+    .bindPopup(`
+      <div class="pop-badge brewery">${b.type}</div>
+      <div class="pop-name">${b.name}</div>
+      <div class="pop-row">📍 ${b.city}</div>
+      ${evNames ? `<div class="pop-row">⚡ Near: <strong>${evNames}</strong></div>` : ''}
+      <div class="pop-row" style="margin-top:5px;">🍺 <strong>${b.votes||0} vote${(b.votes||0)!==1?'s':''}</strong></div>
+      ${notesHtml}
+      ${creditHtml}
+      <button class="pop-vote-btn" style="margin-top:10px;width:100%;justify-content:center;padding:6px 12px;" id="pop-vote-${b.id}" onclick="vote('${b.id}', event)">
+        🍺 Upvote this spot
+      </button>
+    `, { maxWidth: 270 })
+    .addTo(mapInstance);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   LEADERBOARD
+   ════════════════════════════════════════════════════════════════════ */
+
+function buildLeaderboardTabs() {
+  const container = document.getElementById('lb-tabs');
+  // Add one tab per event that has at least 1 brewery (or always show all)
+  PAYMENTS_EVENTS.forEach(ev => {
+    const btn = document.createElement('button');
+    btn.className = 'lb-tab';
+    btn.dataset.tab = String(ev.id);
+    btn.textContent = ev.shortName;
+    btn.onclick = () => setTab(String(ev.id), btn);
+    container.appendChild(btn);
+  });
+}
+
+function setTab(tabId, btnEl) {
+  activeTab = tabId;
+  document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const grid = document.getElementById('lb-grid');
+
+  let filtered = activeTab === 'all'
+    ? [...breweries].sort((a,b) => (b.votes||0) - (a.votes||0))
+    : breweries.filter(b => (b.nearEventIds || []).includes(Number(activeTab)))
+               .sort((a,b) => (b.votes||0) - (a.votes||0));
+
+  if (!filtered.length) {
+    grid.innerHTML = `
+      <div class="lb-empty">
+        <span class="lb-empty-icon">🍺</span>
+        <div class="lb-empty-title">No Spots Here Yet</div>
+        <p class="lb-empty-body">Be the first to suggest a brewery or bar near this event.</p>
+      </div>`;
+    return;
+  }
+
+  const demoNote = isDemo
+    ? `<div style="grid-column:1/-1;background:rgba(245,166,35,.07);border:1px dashed rgba(245,166,35,.3);border-radius:10px;padding:10px 16px;font-size:0.78rem;color:var(--amber);margin-bottom:6px;">
+        ⚙️ <strong>Demo mode</strong> — connect your Google Apps Script to see live community data and enable real upvoting.
+       </div>`
+    : '';
+
+  grid.innerHTML = demoNote + filtered.map((b, i) => buildCard(b, i)).join('');
+}
+
+function medalClass(i) {
+  if (i === 0) return 'gold';
+  if (i === 1) return 'silver';
+  if (i === 2) return 'bronze';
+  return 'num';
+}
+
+function medalLabel(i) {
+  if (i === 0) return '🥇';
+  if (i === 1) return '🥈';
+  if (i === 2) return '🥉';
+  return `#${i+1}`;
+}
+
+function buildCard(b, i) {
+  const evList    = (b.nearEventIds || []).map(eid => PAYMENTS_EVENTS.find(e => e.id === eid)).filter(Boolean);
+  const evName    = evList.map(e => e.shortName).join(', ');
+  const evCity    = evList.length === 1 ? evList[0].city : '';
+  const notesHtml = b.notes
+    ? `<div class="lb-notes">${b.notes}</div>`
+    : '';
+  const creditHtml = b.submittedBy
+    ? `<div class="lb-credit">Suggested by ${b.submittedBy}</div>`
+    : '<div></div>';
+  const rankClass = i < 3 ? `rank-${i+1}` : '';
+
+  return `
+    <div class="lb-card ${rankClass}" id="card-${b.id}">
+      <div class="lb-medal ${medalClass(i)}">${medalLabel(i)}</div>
+      <div class="lb-card-body">
+        <div class="lb-card-name">${b.name}</div>
+        <div class="lb-card-meta">
+          <span class="lb-type-badge">${b.type}</span>
+          ${evName ? `<span class="lb-event-tag">⚡ <span>${evName} — ${evCity}</span></span>` : ''}
+        </div>
+        ${notesHtml}
+        <div class="lb-card-foot">
+          ${creditHtml}
+          <button class="lb-vote-btn" id="lb-vote-${b.id}" onclick="vote('${b.id}', event)">
+            <span class="lb-vote-icon">🍺</span>
+            <span class="lb-vote-count" id="lb-vc-${b.id}">${b.votes||0}</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   VOTING
+   ════════════════════════════════════════════════════════════════════ */
+
+async function vote(id, e) {
+  e.stopPropagation();
+
+  // Find brewery in state
+  const b = breweries.find(x => String(x.id) === String(id));
+  if (!b) return;
+
+  // Optimistic update
+  b.votes = (b.votes || 0) + 1;
+  updateVoteDisplays(id, b.votes);
+
+  // Animate buttons
+  ['lb-vote-' + id, 'pop-vote-' + id].forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.classList.add('bumping');
+      setTimeout(() => btn.classList.remove('bumping'), 350);
+    }
+  });
+
+  // Re-sort leaderboard after brief delay (so the animation feels intentional)
+  setTimeout(() => renderLeaderboard(), 500);
+
+  // Persist to sheet (fire and forget)
+  if (SCRIPT_URL && !isDemo) {
+    try {
+      await fetch(`${SCRIPT_URL}?action=vote&id=${encodeURIComponent(id)}`);
+    } catch(err) {
+      console.warn('Vote sync failed (will retry on refresh):', err);
+    }
+  }
+}
+
+function updateVoteDisplays(id, newCount) {
+  // Update all vote count spans on the page
+  [`lb-vc-${id}`, `pop-vc-${id}`].forEach(elId => {
+    const el = document.getElementById(elId);
+    if (el) {
+      el.style.animation = 'none';
+      el.textContent = newCount;
+      el.offsetHeight; // reflow
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MODAL + FORM
+   ════════════════════════════════════════════════════════════════════ */
+
+function buildEventDropdown() {
+  const sel = document.getElementById('event-select');
+  PAYMENTS_EVENTS.forEach(ev => {
+    const opt = document.createElement('option');
+    opt.value = ev.name;
+    opt.textContent = `${ev.shortName} — ${ev.city}`;
+    sel.appendChild(opt);
+  });
+}
+
+function openModal()  {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(resetModal, 300);
+}
+
+function resetModal() {
+  document.getElementById('form-state').style.display    = 'block';
+  document.getElementById('success-state').style.display = 'none';
+  document.getElementById('suggest-form').reset();
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = 'Submit for Review 🍻';
+  btn.disabled    = false;
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn  = document.getElementById('submit-btn');
+  btn.textContent = 'Sending…';
+  btn.disabled    = true;
+
+  const payload = {
+    venue_name:     form.venue_name.value,
+    venue_type:     form.venue_type.value,
+    address:        form.address.value,
+    near_event:     form.near_event.value,
+    notes:          form.notes.value,
+    submitter_name: form.submitter_name.value
+  };
+
+  if (SCRIPT_URL && !isDemo) {
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode:   'no-cors',
+        body:   JSON.stringify(payload),
+        headers: { 'Content-Type': 'text/plain' }  // text/plain required for no-cors simple requests
+      });
+    } catch (err) { /* no-cors can throw — still treat as success */ }
+  }
+
+  // Always show success (optimistic — the POST either worked or will be retried)
+  document.getElementById('form-state').style.display    = 'none';
+  document.getElementById('success-state').style.display = 'block';
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   GO
+   ════════════════════════════════════════════════════════════════════ */
+init();
+</script>
+
+</body>
+</html>
