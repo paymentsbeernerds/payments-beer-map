@@ -824,7 +824,7 @@
 <div id="map-wrap">
   <div id="map"></div>
   <button id="suggest-btn" onclick="openModal()">🍺 Suggest a Spot</button>
-  <button id="suggest-event-btn" onclick="openEventModal()">⚡ Suggest an Event</button>
+  <button id="suggest-event-btn" onclick="openEventModal()">⚡ Submit Your Event</button>
 </div>
  
 <hr class="section-divider">
@@ -857,7 +857,7 @@
       <div class="modal-head">
         <div>
           <div class="modal-title">Suggest a <em>Spot</em></div>
-          <div class="modal-sub">Reviewed by Payments Beer Nerds before going live on the map.</div>
+          <div class="modal-sub">Tell us about the spots that will become 🤑🍻🤓 legends.</div>
         </div>
         <button class="modal-close" onclick="closeModal()">×</button>
       </div>
@@ -869,7 +869,7 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Type</label>
+            <label>What is it? (optional)</label>
             <select name="venue_type">
               <option value="" disabled selected>Select…</option>
               <option>Brewery</option>
@@ -880,14 +880,14 @@
             </select>
           </div>
           <div class="field">
-            <label>Nearest Event</label>
+            <label>Nearest Event (optional)</label>
             <select name="near_event" id="event-select">
               <option value="" disabled selected>Select…</option>
             </select>
           </div>
         </div>
         <div class="field">
-          <label>City <span class="req">*</span></label>
+          <label>Where is it? <span class="req">*</span></label>
           <input type="text" name="address" placeholder="e.g. San Diego, CA" required>
         </div>
         <div class="field">
@@ -918,8 +918,8 @@
     <div id="event-form-state">
       <div class="modal-head">
         <div>
-          <div class="modal-title">Suggest an <em>Event</em></div>
-          <div class="modal-sub">Know a payments conference we should add? Let us know.</div>
+          <div class="modal-title">Submit an <em>Event</em></div>
+          <div class="modal-sub">Don't see your event? Let us know, and we will get it added!</div>
         </div>
         <button class="modal-close" onclick="closeEventModal()">×</button>
       </div>
@@ -929,15 +929,15 @@
           <input type="text" name="event_name" placeholder="e.g. NACHA Smarter Faster Payments" required>
         </div>
         <div class="field">
-          <label>City</label>
+          <label>City (Optional)</label>
           <input type="text" name="event_city" placeholder="e.g. San Diego, CA">
         </div>
         <div class="field">
-          <label>Dates</label>
+          <label>Dates (optional)</label>
           <input type="text" name="event_dates" placeholder="e.g. April 27–30, 2026">
         </div>
         <div class="field">
-          <label>Website</label>
+          <label>Website (optional)</label>
           <input type="url" name="event_url" placeholder="e.g. https://conference.example.com">
         </div>
         <button type="submit" class="submit-btn" id="event-submit-btn">Submit Event Suggestion ⚡</button>
