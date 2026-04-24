@@ -163,6 +163,32 @@
       box-shadow: 0 6px 30px rgba(245,166,35,.55);
     }
  
+    #suggest-event-btn {
+      position: absolute;
+      bottom: 28px;
+      right: 200px;
+      z-index: 800;
+      background: var(--navy-lift);
+      color: var(--cream);
+      border: 1.5px solid var(--amber);
+      border-radius: 50px;
+      padding: 11px 22px;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      transition: transform .18s, background .18s, box-shadow .18s;
+    }
+    #suggest-event-btn:hover {
+      background: var(--amber-dim);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0,0,0,.5);
+    }
+ 
     /* ══ Leaflet Overrides ══════════════════════════════════════ */
     .leaflet-popup-content-wrapper {
       background: var(--navy-card) !important;
@@ -597,7 +623,8 @@
     }
  
     /* ══ Modal ══════════════════════════════════════════════════ */
-    #modal-overlay {
+    #modal-overlay,
+    #event-modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
@@ -608,7 +635,8 @@
       justify-content: center;
       padding: 20px;
     }
-    #modal-overlay.open { display: flex; }
+    #modal-overlay.open,
+    #event-modal-overlay.open { display: flex; }
  
     .modal {
       background: var(--navy-mid);
@@ -796,6 +824,7 @@
 <div id="map-wrap">
   <div id="map"></div>
   <button id="suggest-btn" onclick="openModal()">🍺 Suggest a Spot</button>
+  <button id="suggest-event-btn" onclick="openEventModal()">⚡ Suggest an Event</button>
 </div>
  
 <hr class="section-divider">
@@ -883,6 +912,47 @@
   </div>
 </div>
  
+<!-- ══ SUGGEST EVENT MODAL ════════════════════════════════════════════ -->
+<div id="event-modal-overlay" onclick="eventOverlayClick(event)">
+  <div class="modal">
+    <div id="event-form-state">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Suggest an <em>Event</em></div>
+          <div class="modal-sub">Know a payments conference we should add? Let us know.</div>
+        </div>
+        <button class="modal-close" onclick="closeEventModal()">×</button>
+      </div>
+      <form id="suggest-event-form" onsubmit="handleEventSubmit(event)">
+        <div class="field">
+          <label>Event Name <span class="req">*</span></label>
+          <input type="text" name="event_name" placeholder="e.g. NACHA Smarter Faster Payments" required>
+        </div>
+        <div class="field">
+          <label>City</label>
+          <input type="text" name="event_city" placeholder="e.g. San Diego, CA">
+        </div>
+        <div class="field">
+          <label>Dates</label>
+          <input type="text" name="event_dates" placeholder="e.g. April 27–30, 2026">
+        </div>
+        <div class="field">
+          <label>Website</label>
+          <input type="url" name="event_url" placeholder="e.g. https://conference.example.com">
+        </div>
+        <button type="submit" class="submit-btn" id="event-submit-btn">Submit Event Suggestion ⚡</button>
+        <p class="form-foot">Suggestions are reviewed by the Payments Beer Nerds team before being added.</p>
+      </form>
+    </div>
+    <div id="event-success-state">
+      <span class="success-emoji">⚡</span>
+      <div class="success-title">Thanks for the tip!</div>
+      <p class="success-body">We'll review it and add it to the map if it fits. See you at a conference soon!</p>
+      <button class="submit-btn" style="width:auto;padding:10px 32px;" onclick="closeEventModal()">Close</button>
+    </div>
+  </div>
+</div>
+ 
 <script>
 /*
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -909,22 +979,37 @@ function doGet(e) {
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
-    const sheet   = getOrCreateSheet();
     const id      = Date.now().toString();
-    sheet.appendRow([
-      id,
-      payload.venue_name     || '',
-      payload.venue_type     || '',
-      payload.address        || '',
-      '',                        // nearEventId  ← fill when approving
-      payload.near_event     || '',
-      '',                        // lat          ← fill when approving
-      '',                        // lng          ← fill when approving
-      payload.notes          || '',
-      payload.submitter_name || '',
-      'pending',                 // approved ← change to "yes" to publish
-      0                          // votes
-    ]);
+ 
+    if (payload.submission_type === 'event') {
+      // Route to Events tab
+      const sheet = getOrCreateEventsSheet();
+      sheet.appendRow([
+        id,
+        payload.event_name  || '',
+        payload.event_city  || '',
+        payload.event_dates || '',
+        payload.event_url   || '',
+        new Date().toISOString()
+      ]);
+    } else {
+      // Route to Breweries tab (default)
+      const sheet = getOrCreateSheet();
+      sheet.appendRow([
+        id,
+        payload.venue_name     || '',
+        payload.venue_type     || '',
+        payload.address        || '',
+        '',                        // nearEventId  ← fill when approving
+        payload.near_event     || '',
+        '',                        // lat          ← fill when approving
+        '',                        // lng          ← fill when approving
+        payload.notes          || '',
+        payload.submitter_name || '',
+        'pending',                 // approved ← change to "yes" to publish
+        0                          // votes
+      ]);
+    }
     return ContentService
       .createTextOutput(JSON.stringify({ success: true, id }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -933,6 +1018,20 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+ 
+function getOrCreateEventsSheet() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let   sheet = ss.getSheetByName('Suggested Events');
+  if (!sheet) {
+    sheet = ss.insertSheet('Suggested Events');
+    sheet.appendRow(['id', 'name', 'city', 'dates', 'url', 'submitted_at']);
+    sheet.getRange(1,1,1,6)
+         .setFontWeight('bold')
+         .setBackground('#1a3a55')
+         .setFontColor('#ffffff');
+  }
+  return sheet;
 }
  
 function getApprovedBreweries() {
@@ -995,7 +1094,7 @@ function getOrCreateSheet() {
   It looks like: https://script.google.com/macros/s/XXXXXXXXX/exec
   Leave blank to see demo data.
 */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzL87P7URs3Gxgp9WgpzQDEVKSbfNAQz0QNW0dOM3ubctKSVBP1xiKeXCP3241UnrPO4A/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJxxWBa9JhEdbzU_9wKv6mG0t_N2utaoTep2RXi0grbbWUVPDGMfo0KJiEDJJHuaKCbg/exec';
  
 /*
   STEP 2: Your payments events. Add / remove as needed.
@@ -1470,8 +1569,6 @@ function overlayClick(e) {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
  
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
- 
 async function handleSubmit(e) {
   e.preventDefault();
   const form = e.target;
@@ -1502,6 +1599,64 @@ async function handleSubmit(e) {
   // Always show success (optimistic — the POST either worked or will be retried)
   document.getElementById('form-state').style.display    = 'none';
   document.getElementById('success-state').style.display = 'block';
+}
+ 
+/* ════════════════════════════════════════════════════════════════════
+   EVENT MODAL
+   ════════════════════════════════════════════════════════════════════ */
+ 
+function openEventModal() {
+  document.getElementById('event-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+ 
+function closeEventModal() {
+  document.getElementById('event-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(() => {
+    document.getElementById('event-form-state').style.display    = 'block';
+    document.getElementById('event-success-state').style.display = 'none';
+    document.getElementById('suggest-event-form').reset();
+    const btn = document.getElementById('event-submit-btn');
+    btn.textContent = 'Submit Event Suggestion ⚡';
+    btn.disabled    = false;
+  }, 300);
+}
+ 
+function eventOverlayClick(e) {
+  if (e.target === document.getElementById('event-modal-overlay')) closeEventModal();
+}
+ 
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeEventModal(); } });
+ 
+async function handleEventSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn  = document.getElementById('event-submit-btn');
+  btn.textContent = 'Sending…';
+  btn.disabled    = true;
+ 
+  const payload = {
+    submission_type: 'event',
+    event_name:  form.event_name.value,
+    event_city:  form.event_city.value,
+    event_dates: form.event_dates.value,
+    event_url:   form.event_url.value
+  };
+ 
+  if (SCRIPT_URL && !isDemo) {
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode:   'no-cors',
+        body:   JSON.stringify(payload),
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    } catch (err) { /* no-cors — treat as success */ }
+  }
+ 
+  document.getElementById('event-form-state').style.display    = 'none';
+  document.getElementById('event-success-state').style.display = 'block';
 }
  
 /* ════════════════════════════════════════════════════════════════════
