@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Find Your Pint — Payments Beer Nerds</title>
-
+ 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-
+ 
   <style>
     /* ══ Design Tokens ══════════════════════════════════════════ */
     :root {
@@ -28,17 +28,17 @@
       --border:      rgba(255,255,255,0.08);
       --border-warm: rgba(245,166,35,0.18);
     }
-
+ 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-
+ 
     body {
       font-family: 'DM Sans', sans-serif;
       background: var(--navy);
       color: var(--cream);
       overflow-x: hidden;
     }
-
+ 
     /* ══ Page Header ════════════════════════════════════════════ */
     .header {
       background: var(--navy);
@@ -47,7 +47,7 @@
       position: relative;
       overflow: hidden;
     }
-
+ 
     .header::before {
       content: '';
       position: absolute;
@@ -64,7 +64,7 @@
       background: radial-gradient(circle, rgba(63,112,85,.15) 0%, transparent 65%);
       pointer-events: none;
     }
-
+ 
     .header-inner {
       max-width: 1280px;
       margin: 0 auto;
@@ -76,7 +76,7 @@
       position: relative;
       z-index: 1;
     }
-
+ 
     .header-eyebrow {
       font-size: 0.7rem;
       letter-spacing: 0.22em;
@@ -85,7 +85,7 @@
       font-weight: 700;
       margin-bottom: 5px;
     }
-
+ 
     .header-title {
       font-family: 'Bebas Neue', cursive;
       font-size: clamp(2.4rem, 4.5vw, 3.6rem);
@@ -94,7 +94,7 @@
       color: var(--cream);
     }
     .header-title em { font-style: normal; color: var(--amber); }
-
+ 
     .header-sub {
       font-size: 0.87rem;
       color: var(--muted);
@@ -102,13 +102,13 @@
       max-width: 500px;
       line-height: 1.55;
     }
-
+ 
     .legend {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
-
+ 
     .legend-pill {
       display: flex;
       align-items: center;
@@ -120,7 +120,7 @@
       font-size: 0.78rem;
       font-weight: 500;
     }
-
+ 
     .legend-dot {
       width: 10px; height: 10px;
       border-radius: 50%;
@@ -128,15 +128,15 @@
     }
     .legend-dot.event   { background: var(--amber); box-shadow: 0 0 8px var(--amber-glow); }
     .legend-dot.brewery { background: var(--green-lt); }
-
+ 
     /* ══ Map ════════════════════════════════════════════════════ */
     #map-wrap { position: relative; }
-
+ 
     #map {
       width: 100%;
       height: clamp(460px, 58vh, 680px);
     }
-
+ 
     #suggest-btn {
       position: absolute;
       bottom: 26px;
@@ -162,7 +162,7 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 30px rgba(245,166,35,.55);
     }
-
+ 
     /* ══ Leaflet Overrides ══════════════════════════════════════ */
     .leaflet-popup-content-wrapper {
       background: var(--navy-card) !important;
@@ -178,7 +178,7 @@
       font-family: 'DM Sans', sans-serif !important;
     }
     .leaflet-popup-close-button { color: var(--muted) !important; font-size: 18px !important; top: 8px !important; right: 10px !important; }
-
+ 
     /* ══ Popup Components ═══════════════════════════════════════ */
     .pop-badge {
       display: inline-block;
@@ -192,7 +192,7 @@
     }
     .pop-badge.event   { background: var(--amber-dim); color: var(--amber); }
     .pop-badge.brewery { background: var(--green-dim); color: var(--green-lt); }
-
+ 
     .pop-name {
       font-family: 'Bebas Neue', cursive;
       font-size: 1.22rem;
@@ -200,7 +200,7 @@
       line-height: 1.15;
       margin-bottom: 7px;
     }
-
+ 
     .pop-row {
       font-size: 0.78rem;
       color: var(--muted);
@@ -210,13 +210,13 @@
       margin-bottom: 3px;
     }
     .pop-row strong { color: var(--cream); font-weight: 500; }
-
+ 
     .pop-divider {
       border: none;
       border-top: 1px solid var(--border);
       margin: 10px 0;
     }
-
+ 
     .pop-rank-label {
       font-size: 0.66rem;
       font-weight: 700;
@@ -225,7 +225,7 @@
       color: var(--muted);
       margin-bottom: 8px;
     }
-
+ 
     .pop-spot {
       display: flex;
       align-items: center;
@@ -235,7 +235,7 @@
       border-bottom: 1px solid rgba(255,255,255,.05);
     }
     .pop-spot:last-child { border-bottom: none; }
-
+ 
     .pop-spot-left {
       display: flex;
       align-items: center;
@@ -243,7 +243,7 @@
       flex: 1;
       min-width: 0;
     }
-
+ 
     .pop-rank {
       font-size: 0.72rem;
       font-family: 'Bebas Neue', cursive;
@@ -256,7 +256,7 @@
     .pop-rank.gold   { color: #FFD700; }
     .pop-rank.silver { color: #C0C0C0; }
     .pop-rank.bronze { color: #CD7F32; }
-
+ 
     .pop-spot-name {
       font-size: 0.82rem;
       font-weight: 600;
@@ -264,7 +264,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
+ 
     .pop-vote-btn {
       background: rgba(255,255,255,.06);
       border: 1px solid var(--border);
@@ -283,7 +283,7 @@
     }
     .pop-vote-btn:hover { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
     .pop-vote-btn.bump  { animation: votebump .25s cubic-bezier(.34,1.56,.64,1); }
-
+ 
     @keyframes voteburn {
       0%   { transform: scale(1); }
       40%  { transform: scale(1.25); }
@@ -296,14 +296,14 @@
       100% { opacity:1; transform: translateY(0); }
     }
     @keyframes voteburn { 0%{transform:scale(1)} 40%{transform:scale(1.3)} 100%{transform:scale(1)} }
-
+ 
     .pop-empty {
       font-size: 0.78rem;
       color: var(--muted);
       font-style: italic;
       padding: 4px 0;
     }
-
+ 
     .pop-link {
       display: inline-block;
       margin-top: 10px;
@@ -314,14 +314,14 @@
       letter-spacing: 0.04em;
     }
     .pop-link:hover { text-decoration: underline; }
-
+ 
     /* ══ Leaderboard Section ════════════════════════════════════ */
     #leaderboard {
       max-width: 1280px;
       margin: 0 auto;
       padding: 52px 40px 72px;
     }
-
+ 
     .lb-header {
       display: flex;
       align-items: flex-end;
@@ -330,7 +330,7 @@
       gap: 20px;
       margin-bottom: 28px;
     }
-
+ 
     .lb-eyebrow {
       font-size: 0.7rem;
       letter-spacing: 0.22em;
@@ -339,7 +339,7 @@
       font-weight: 700;
       margin-bottom: 4px;
     }
-
+ 
     .lb-title {
       font-family: 'Bebas Neue', cursive;
       font-size: clamp(2rem, 3.5vw, 2.8rem);
@@ -347,13 +347,13 @@
       line-height: 1;
     }
     .lb-title em { font-style: normal; color: var(--amber); }
-
+ 
     .lb-sub {
       font-size: 0.84rem;
       color: var(--muted);
       margin-top: 5px;
     }
-
+ 
     /* Tabs */
     .lb-tabs {
       display: flex;
@@ -363,7 +363,7 @@
       border-bottom: 2px solid var(--border);
       padding-bottom: 0;
     }
-
+ 
     .lb-tab {
       background: none;
       border: none;
@@ -384,14 +384,14 @@
       color: var(--amber);
       border-bottom-color: var(--amber);
     }
-
+ 
     /* Grid */
     .lb-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 14px;
     }
-
+ 
     /* Card */
     .lb-card {
       background: var(--navy-lift);
@@ -420,7 +420,7 @@
     .lb-card.rank-1 { border-color: rgba(255,215,0,.3); }
     .lb-card.rank-2 { border-color: rgba(192,192,192,.22); }
     .lb-card.rank-3 { border-color: rgba(205,127,50,.22); }
-
+ 
     .lb-medal {
       font-family: 'Bebas Neue', cursive;
       font-size: 1.5rem;
@@ -435,9 +435,9 @@
     .lb-medal.silver { color: #C0C0C0; }
     .lb-medal.bronze { color: #CD7F32; }
     .lb-medal.num    { color: var(--muted); font-size: 1.1rem; }
-
+ 
     .lb-card-body { flex: 1; min-width: 0; }
-
+ 
     .lb-card-name {
       font-family: 'Bebas Neue', cursive;
       font-size: 1.2rem;
@@ -445,7 +445,7 @@
       line-height: 1.1;
       margin-bottom: 5px;
     }
-
+ 
     .lb-card-meta {
       display: flex;
       gap: 6px;
@@ -453,7 +453,7 @@
       align-items: center;
       margin-bottom: 7px;
     }
-
+ 
     .lb-type-badge {
       font-size: 0.62rem;
       font-weight: 700;
@@ -464,7 +464,7 @@
       background: var(--green-dim);
       color: var(--green-lt);
     }
-
+ 
     .lb-event-tag {
       font-size: 0.72rem;
       color: var(--muted);
@@ -478,7 +478,7 @@
       white-space: nowrap;
       max-width: 160px;
     }
-
+ 
     .lb-notes {
       font-size: 0.78rem;
       color: var(--muted);
@@ -491,20 +491,20 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-
+ 
     .lb-card-foot {
       margin-top: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-
+ 
     .lb-credit {
       font-size: 0.7rem;
       color: var(--muted);
       font-style: italic;
     }
-
+ 
     .lb-vote-btn {
       display: flex;
       align-items: center;
@@ -528,31 +528,31 @@
     .lb-vote-btn.bumping {
       animation: cardvotebump .3s cubic-bezier(.34,1.56,.64,1);
     }
-
+ 
     @keyframes cardvotebump {
       0%   { transform: scale(1); }
       50%  { transform: scale(1.12); }
       100% { transform: scale(1); }
     }
-
+ 
     .lb-vote-icon { font-size: 1rem; display: inline-block; transition: transform .2s; }
     .lb-vote-btn:hover .lb-vote-icon { transform: translateY(-2px); }
-
+ 
     .lb-vote-count {
       font-size: 1rem;
       min-width: 18px;
       text-align: center;
     }
-
+ 
     /* Empty state */
     .lb-empty {
       grid-column: 1 / -1;
       text-align: center;
       padding: 60px 20px;
     }
-
+ 
     .lb-empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
-
+ 
     .lb-empty-title {
       font-family: 'Bebas Neue', cursive;
       font-size: 1.6rem;
@@ -560,13 +560,13 @@
       color: var(--muted);
       margin-bottom: 6px;
     }
-
+ 
     .lb-empty-body {
       font-size: 0.84rem;
       color: var(--muted);
       opacity: .7;
     }
-
+ 
     /* Loading state */
     .lb-loading {
       grid-column: 1 / -1;
@@ -578,7 +578,7 @@
       color: var(--muted);
       font-size: 0.88rem;
     }
-
+ 
     .spinner {
       width: 20px; height: 20px;
       border: 2px solid var(--border);
@@ -586,16 +586,16 @@
       border-radius: 50%;
       animation: spin .8s linear infinite;
     }
-
+ 
     @keyframes spin { to { transform: rotate(360deg); } }
-
+ 
     /* Section divider */
     .section-divider {
       border: none;
       border-top: 1px solid var(--border);
       margin: 0 40px;
     }
-
+ 
     /* ══ Modal ══════════════════════════════════════════════════ */
     #modal-overlay {
       display: none;
@@ -609,7 +609,7 @@
       padding: 20px;
     }
     #modal-overlay.open { display: flex; }
-
+ 
     .modal {
       background: var(--navy-mid);
       border: 1px solid var(--border-warm);
@@ -622,19 +622,19 @@
       box-shadow: 0 28px 80px rgba(0,0,0,.8);
       animation: popIn .28s cubic-bezier(.34,1.56,.64,1);
     }
-
+ 
     @keyframes popIn {
       from { opacity:0; transform: scale(.92) translateY(20px); }
       to   { opacity:1; transform: scale(1) translateY(0); }
     }
-
+ 
     .modal-head {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 24px;
     }
-
+ 
     .modal-title {
       font-family: 'Bebas Neue', cursive;
       font-size: 2.1rem;
@@ -642,9 +642,9 @@
       line-height: 1;
     }
     .modal-title em { font-style: normal; color: var(--amber); }
-
+ 
     .modal-sub { font-size: 0.8rem; color: var(--muted); margin-top: 5px; }
-
+ 
     .modal-close {
       background: none;
       border: none;
@@ -656,9 +656,9 @@
       transition: color .15s;
     }
     .modal-close:hover { color: var(--cream); }
-
+ 
     .field { margin-bottom: 15px; }
-
+ 
     .field label {
       display: block;
       font-size: 0.7rem;
@@ -669,7 +669,7 @@
       margin-bottom: 6px;
     }
     .field label .req { color: var(--amber); }
-
+ 
     .field input,
     .field select,
     .field textarea {
@@ -695,9 +695,9 @@
     }
     .field select option { background: #162030; }
     .field textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
-
+ 
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
+ 
     .submit-btn {
       width: 100%;
       background: var(--amber);
@@ -714,7 +714,7 @@
     }
     .submit-btn:hover { background: var(--amber-lt); transform: translateY(-1px); }
     .submit-btn:disabled { opacity: .6; transform: none; cursor: default; }
-
+ 
     .form-foot {
       font-size: 0.73rem;
       color: var(--muted);
@@ -722,15 +722,15 @@
       margin-top: 10px;
       line-height: 1.5;
     }
-
+ 
     #success-state {
       display: none;
       text-align: center;
       padding: 20px 10px;
     }
-
+ 
     .success-emoji { font-size: 3.8rem; display: block; margin-bottom: 14px; }
-
+ 
     .success-title {
       font-family: 'Bebas Neue', cursive;
       font-size: 2.1rem;
@@ -738,7 +738,7 @@
       color: var(--green-lt);
       margin-bottom: 8px;
     }
-
+ 
     .success-body {
       font-size: 0.87rem;
       color: var(--muted);
@@ -746,22 +746,22 @@
       max-width: 290px;
       margin: 0 auto 22px;
     }
-
+ 
     /* ══ Squarespace Full-Width Override ═══════════════════════ */
     html, body { width: 100%; max-width: 100% !important; }
-
+ 
     .sqs-block-code,
     .sqs-block-content,
     .sqs-col-12,
     .sqs-row,
     .content-wrapper,
     .container { max-width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; }
-
+ 
     /* ══ Scrollbar ══════════════════════════════════════════════ */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.09); border-radius: 5px; }
-
+ 
     /* ══ Responsive ═════════════════════════════════════════════ */
     @media (max-width: 700px) {
       .header          { padding: 20px; }
@@ -776,7 +776,7 @@
   </style>
 </head>
 <body>
-
+ 
 <!-- ══ HEADER ══════════════════════════════════════════════════ -->
 <header class="header">
   <div class="header-inner">
@@ -791,15 +791,15 @@
     </div>
   </div>
 </header>
-
+ 
 <!-- ══ MAP ═════════════════════════════════════════════════════ -->
 <div id="map-wrap">
   <div id="map"></div>
   <button id="suggest-btn" onclick="openModal()">🍺 Suggest a Spot</button>
 </div>
-
+ 
 <hr class="section-divider">
-
+ 
 <!-- ══ LEADERBOARD ═════════════════════════════════════════════ -->
 <section id="leaderboard">
   <div class="lb-header">
@@ -809,21 +809,21 @@
       <p class="lb-sub">Voted on by conference-goers. Click 🍺 to cast your vote.</p>
     </div>
   </div>
-
+ 
   <div class="lb-tabs" id="lb-tabs">
     <button class="lb-tab active" data-tab="all" onclick="setTab('all', this)">All Events</button>
     <!-- Event tabs injected by JS -->
   </div>
-
+ 
   <div class="lb-grid" id="lb-grid">
     <div class="lb-loading"><div class="spinner"></div> Loading spots…</div>
   </div>
 </section>
-
+ 
 <!-- ══ SUBMIT MODAL ════════════════════════════════════════════ -->
 <div id="modal-overlay" onclick="overlayClick(event)">
   <div class="modal">
-
+ 
     <div id="form-state">
       <div class="modal-head">
         <div>
@@ -832,7 +832,7 @@
         </div>
         <button class="modal-close" onclick="closeModal()">×</button>
       </div>
-
+ 
       <form id="suggest-form" onsubmit="handleSubmit(event)">
         <div class="field">
           <label>Brewery / Bar Name <span class="req">*</span></label>
@@ -873,7 +873,7 @@
         <p class="form-foot">Submissions are reviewed by the Payments Beer Nerds team before going live.</p>
       </form>
     </div>
-
+ 
     <div id="success-state">
       <span class="success-emoji">🍺</span>
       <div class="success-title">Submission Received!</div>
@@ -882,7 +882,7 @@
     </div>
   </div>
 </div>
-
+ 
 <script>
 /*
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -891,10 +891,10 @@
 ║  (Extensions → Apps Script → Deploy → New Deployment)               ║
 ║  Settings: Execute as = Me  |  Who has access = Anyone              ║
 ╠══════════════════════════════════════════════════════════════════════╣
-
+ 
 const SHEET_NAME = 'Breweries';
-const HEADERS = ['id','name','type','city','nearEventId','nearEventId2','eventName','lat','lng','notes','submittedBy','approved','votes'];
-
+const HEADERS = ['id','name','type','city','nearEventId','nearEventId2','nearEventId3','eventName','lat','lng','notes','submittedBy','approved','votes'];
+ 
 function doGet(e) {
   const action = (e.parameter && e.parameter.action) || 'breweries';
   let result;
@@ -905,7 +905,7 @@ function doGet(e) {
     .createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
 }
-
+ 
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
@@ -934,7 +934,7 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
-
+ 
 function getApprovedBreweries() {
   const sheet = getOrCreateSheet();
   const data  = sheet.getDataRange().getValues();
@@ -952,7 +952,7 @@ function getApprovedBreweries() {
       return obj;
     });
 }
-
+ 
 function incrementVote(id) {
   const sheet    = getOrCreateSheet();
   const data     = sheet.getDataRange().getValues();
@@ -968,7 +968,7 @@ function incrementVote(id) {
   }
   return { error: 'ID not found' };
 }
-
+ 
 function getOrCreateSheet() {
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   let   sheet = ss.getSheetByName(SHEET_NAME);
@@ -982,21 +982,21 @@ function getOrCreateSheet() {
   }
   return sheet;
 }
-
+ 
 ╚══════════════════════════════════════════════════════════════════════╝
 */
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    ⚙️  YOUR CONFIGURATION — edit these sections
    ════════════════════════════════════════════════════════════════════ */
-
+ 
 /*
   STEP 1: Paste your Apps Script Web App URL here after deploying.
   It looks like: https://script.google.com/macros/s/XXXXXXXXX/exec
   Leave blank to see demo data.
 */
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzL87P7URs3Gxgp9WgpzQDEVKSbfNAQz0QNW0dOM3ubctKSVBP1xiKeXCP3241UnrPO4A/exec';
-
+ 
 /*
   STEP 2: Your payments events. Add / remove as needed.
   lat/lng: right-click a location in Google Maps → "What's here?"
@@ -1101,9 +1101,19 @@ const PAYMENTS_EVENTS = [
     venue: "Federal Reserve Bank of Chicago",
     lat: 41.878677, lng: -87.632818,
     url: "https://chicagopaymentssymposium.org"
-  }
+  },
+  {
+    id: 11,
+    name: "WesPay Payments Symposium",
+    shortName: "WesPay",
+    city: "Las Vegas, NV",
+    date: "September 9-11, 2026",
+    venue: "Palms Casino Resort",
+    lat: 36.114592, lng: -115.194826,
+    url: "https://www.sibos.com"
+  },
 ];
-
+ 
 /*
   DEMO DATA — shown when SCRIPT_URL is blank, so you can preview
   the layout before the Apps Script is connected.
@@ -1119,20 +1129,20 @@ const DEMO_BREWERIES = [
   { id:'d7', name:'Jackalope Brewing Company',       type:'Brewery',        city:'Nashville, TN',  nearEventIds:[4], lat:36.1584, lng:-86.7835, notes:'Fun, laid-back Nashville brewery. The Thunder Ann APA is a crowd favorite.', submittedBy:'', votes:6 },
   { id:'d8', name:'Corsair Artisan Brewery',         type:'Brewpub',        city:'Nashville, TN',  nearEventIds:[4], lat:36.1627, lng:-86.7816, notes:'Craft beer and spirits near downtown Nashville. Easy Uber from Opryland.', submittedBy:'', votes:3 }
 ];
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    APP STATE
    ════════════════════════════════════════════════════════════════════ */
-
+ 
 let breweries  = [];
 let mapInstance;
 let activeTab  = 'all';
 let isDemo     = false;
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    INIT
    ════════════════════════════════════════════════════════════════════ */
-
+ 
 async function init() {
   await loadBreweries();
   buildEventDropdown();
@@ -1140,19 +1150,19 @@ async function init() {
   initMap();
   renderLeaderboard();
 }
-
+ 
 function normalizeBrewery(b) {
   // Build nearEventIds from nearEventId + optional nearEventId2 columns
   // Using two separate columns avoids Google Sheets number-formatting issues
   if (!b.nearEventIds || !Array.isArray(b.nearEventIds)) {
-    const ids = [b.nearEventId, b.nearEventId2]
+    const ids = [b.nearEventId, b.nearEventId2, b.nearEventId3]
       .map(x => Number(x))
       .filter(n => n && !isNaN(n));
     b.nearEventIds = [...new Set(ids)]; // deduplicate
   }
   return b;
 }
-
+ 
 async function loadBreweries() {
   if (!SCRIPT_URL) {
     breweries = DEMO_BREWERIES.map(b => normalizeBrewery({ ...b }));
@@ -1170,24 +1180,24 @@ async function loadBreweries() {
     isDemo = true;
   }
 }
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    MAP
    ════════════════════════════════════════════════════════════════════ */
-
+ 
 function initMap() {
   mapInstance = L.map('map', { center: [38.8, -96.5], zoom: 4, zoomControl: true });
-
+ 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap &copy; CARTO',
     subdomains: 'abcd',
     maxZoom: 19
   }).addTo(mapInstance);
-
+ 
   PAYMENTS_EVENTS.forEach(ev => placeEventMarker(ev));
   breweries.forEach(b => placeBreweryMarker(b));
 }
-
+ 
 function eventIcon() {
   return L.divIcon({
     className: '',
@@ -1195,7 +1205,7 @@ function eventIcon() {
     iconSize:[40,40], iconAnchor:[20,20], popupAnchor:[0,-26]
   });
 }
-
+ 
 function breweryIcon(votes) {
   const size = Math.min(36, 26 + Math.floor((votes || 0) / 3));
   return L.divIcon({
@@ -1204,11 +1214,11 @@ function breweryIcon(votes) {
     iconSize:[size,size], iconAnchor:[size/2,size/2], popupAnchor:[0,-size/2-4]
   });
 }
-
+ 
 function placeEventMarker(ev) {
   const nearby = breweries.filter(b => (b.nearEventIds || []).includes(ev.id))
     .sort((a,b) => (b.votes||0) - (a.votes||0));
-
+ 
   const nearbyHtml = nearby.length
     ? `<hr class="pop-divider">
        <div class="pop-rank-label">Top Spots Nearby (${nearby.length})</div>
@@ -1224,9 +1234,9 @@ function placeEventMarker(ev) {
          </div>`).join('')}
        ${nearby.length > 5 ? `<div style="font-size:0.75rem;color:var(--muted);padding-top:6px;text-align:center;">+${nearby.length-5} more in the leaderboard below</div>` : ''}`
     : `<hr class="pop-divider"><div class="pop-empty">No spots added yet — be the first!</div>`;
-
+ 
   const linkHtml = ev.url ? `<a href="${ev.url}" target="_blank" rel="noopener" class="pop-link">View Event →</a>` : '';
-
+ 
   L.marker([ev.lat, ev.lng], { icon: eventIcon() })
     .bindPopup(`
       <div class="pop-badge event">Payments Event</div>
@@ -1239,7 +1249,7 @@ function placeEventMarker(ev) {
     `, { maxWidth: 300 })
     .addTo(mapInstance);
 }
-
+ 
 function placeBreweryMarker(b) {
   const evNames = (b.nearEventIds || []).map(eid => (PAYMENTS_EVENTS.find(e => e.id === eid) || {}).shortName).filter(Boolean).join(', ');
   const notesHtml = b.notes
@@ -1248,7 +1258,7 @@ function placeBreweryMarker(b) {
   const creditHtml = b.submittedBy
     ? `<div style="font-size:0.7rem;color:var(--muted);margin-top:7px;">Suggested by ${b.submittedBy}</div>`
     : '';
-
+ 
   L.marker([b.lat, b.lng], { icon: breweryIcon(b.votes) })
     .bindPopup(`
       <div class="pop-badge brewery">${b.type}</div>
@@ -1264,11 +1274,11 @@ function placeBreweryMarker(b) {
     `, { maxWidth: 270 })
     .addTo(mapInstance);
 }
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    LEADERBOARD
    ════════════════════════════════════════════════════════════════════ */
-
+ 
 function buildLeaderboardTabs() {
   const container = document.getElementById('lb-tabs');
   // Add one tab per event that has at least 1 brewery (or always show all)
@@ -1281,22 +1291,22 @@ function buildLeaderboardTabs() {
     container.appendChild(btn);
   });
 }
-
+ 
 function setTab(tabId, btnEl) {
   activeTab = tabId;
   document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
   btnEl.classList.add('active');
   renderLeaderboard();
 }
-
+ 
 function renderLeaderboard() {
   const grid = document.getElementById('lb-grid');
-
+ 
   let filtered = activeTab === 'all'
     ? [...breweries].sort((a,b) => (b.votes||0) - (a.votes||0))
     : breweries.filter(b => (b.nearEventIds || []).includes(Number(activeTab)))
                .sort((a,b) => (b.votes||0) - (a.votes||0));
-
+ 
   if (!filtered.length) {
     grid.innerHTML = `
       <div class="lb-empty">
@@ -1306,30 +1316,30 @@ function renderLeaderboard() {
       </div>`;
     return;
   }
-
+ 
   const demoNote = isDemo
     ? `<div style="grid-column:1/-1;background:rgba(245,166,35,.07);border:1px dashed rgba(245,166,35,.3);border-radius:10px;padding:10px 16px;font-size:0.78rem;color:var(--amber);margin-bottom:6px;">
         ⚙️ <strong>Demo mode</strong> — connect your Google Apps Script to see live community data and enable real upvoting.
        </div>`
     : '';
-
+ 
   grid.innerHTML = demoNote + filtered.map((b, i) => buildCard(b, i)).join('');
 }
-
+ 
 function medalClass(i) {
   if (i === 0) return 'gold';
   if (i === 1) return 'silver';
   if (i === 2) return 'bronze';
   return 'num';
 }
-
+ 
 function medalLabel(i) {
   if (i === 0) return '🥇';
   if (i === 1) return '🥈';
   if (i === 2) return '🥉';
   return `#${i+1}`;
 }
-
+ 
 function buildCard(b, i) {
   const evList    = (b.nearEventIds || []).map(eid => PAYMENTS_EVENTS.find(e => e.id === eid)).filter(Boolean);
   const evName    = evList.map(e => e.shortName).join(', ');
@@ -1341,7 +1351,7 @@ function buildCard(b, i) {
     ? `<div class="lb-credit">Suggested by ${b.submittedBy}</div>`
     : '<div></div>';
   const rankClass = i < 3 ? `rank-${i+1}` : '';
-
+ 
   return `
     <div class="lb-card ${rankClass}" id="card-${b.id}">
       <div class="lb-medal ${medalClass(i)}">${medalLabel(i)}</div>
@@ -1362,22 +1372,22 @@ function buildCard(b, i) {
       </div>
     </div>`;
 }
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    VOTING
    ════════════════════════════════════════════════════════════════════ */
-
+ 
 async function vote(id, e) {
   e.stopPropagation();
-
+ 
   // Find brewery in state
   const b = breweries.find(x => String(x.id) === String(id));
   if (!b) return;
-
+ 
   // Optimistic update
   b.votes = (b.votes || 0) + 1;
   updateVoteDisplays(id, b.votes);
-
+ 
   // Animate buttons
   ['lb-vote-' + id, 'pop-vote-' + id].forEach(btnId => {
     const btn = document.getElementById(btnId);
@@ -1386,10 +1396,10 @@ async function vote(id, e) {
       setTimeout(() => btn.classList.remove('bumping'), 350);
     }
   });
-
+ 
   // Re-sort leaderboard after brief delay (so the animation feels intentional)
   setTimeout(() => renderLeaderboard(), 500);
-
+ 
   // Persist to sheet (fire and forget)
   if (SCRIPT_URL && !isDemo) {
     try {
@@ -1399,7 +1409,7 @@ async function vote(id, e) {
     }
   }
 }
-
+ 
 function updateVoteDisplays(id, newCount) {
   // Update all vote count spans on the page
   [`lb-vc-${id}`, `pop-vc-${id}`].forEach(elId => {
@@ -1411,11 +1421,11 @@ function updateVoteDisplays(id, newCount) {
     }
   });
 }
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    MODAL + FORM
    ════════════════════════════════════════════════════════════════════ */
-
+ 
 function buildEventDropdown() {
   const sel = document.getElementById('event-select');
   PAYMENTS_EVENTS.forEach(ev => {
@@ -1425,18 +1435,18 @@ function buildEventDropdown() {
     sel.appendChild(opt);
   });
 }
-
+ 
 function openModal()  {
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-
+ 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   setTimeout(resetModal, 300);
 }
-
+ 
 function resetModal() {
   document.getElementById('form-state').style.display    = 'block';
   document.getElementById('success-state').style.display = 'none';
@@ -1445,20 +1455,20 @@ function resetModal() {
   btn.textContent = 'Submit for Review 🍻';
   btn.disabled    = false;
 }
-
+ 
 function overlayClick(e) {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
-
+ 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
+ 
 async function handleSubmit(e) {
   e.preventDefault();
   const form = e.target;
   const btn  = document.getElementById('submit-btn');
   btn.textContent = 'Sending…';
   btn.disabled    = true;
-
+ 
   const payload = {
     venue_name:     form.venue_name.value,
     venue_type:     form.venue_type.value,
@@ -1467,7 +1477,7 @@ async function handleSubmit(e) {
     notes:          form.notes.value,
     submitter_name: form.submitter_name.value
   };
-
+ 
   if (SCRIPT_URL && !isDemo) {
     try {
       await fetch(SCRIPT_URL, {
@@ -1478,17 +1488,17 @@ async function handleSubmit(e) {
       });
     } catch (err) { /* no-cors can throw — still treat as success */ }
   }
-
+ 
   // Always show success (optimistic — the POST either worked or will be retried)
   document.getElementById('form-state').style.display    = 'none';
   document.getElementById('success-state').style.display = 'block';
 }
-
+ 
 /* ════════════════════════════════════════════════════════════════════
    GO
    ════════════════════════════════════════════════════════════════════ */
 init();
 </script>
-
+ 
 </body>
 </html>
